@@ -22,7 +22,7 @@ class Klang():
         self.cur_code     = None
         self.cur_name     = None
         #某次计算过程中 需要的数据片段
-        self.dfstart      = "2021-01-01"
+        self.dfstart      = "2023-01-01"
         self.dfend        = end #当前要计算的交易周期
         self.reload       = False
         self.canUpdate    = False # 允许更新update_list.csv        
@@ -61,7 +61,7 @@ class Klang():
 
 
 
-    def date(self,start="2021-01-01",end=end):
+    def date(self,start="2023-01-01",end=end):
 
         self.dfstart=start
         self.dfend=end
@@ -111,7 +111,7 @@ def Klang_init():
     Kl.cur_code = Kl.stocklist[0]['code']    
     Kl.cur_name = Kl.stocklist[0]['name']    
     #set default stock
-    Kl.date(start='2021-01-01')
+    Kl.date(start='2023-01-01')
     Kl.code(Kl.cur_code)
 
     

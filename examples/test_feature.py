@@ -15,7 +15,7 @@ def scaler_data(x):
     return ret
 
  
-#df = Kl.data_engine.get_day("五矿稀土",'sz.000831','2021-01-01','2021-12-01')
+#df = Kl.data_engine.get_day("五矿稀土",'sz.000831','2023-01-01','2021-12-01')
 fields = [
        {'name':'fist_location_of_max'}, #第一次最大值出现的位置
        {'name':'fist_location_of_min'}, #第一次最小值出现的位置
@@ -103,7 +103,7 @@ for df in Kl.df_all:
     try:
         Kl.code(df['code'])
         print("****",df['code'],df['name'],C,"****")
-        #df2 = Kl.data_engine.get_day(df['name'],df['code'],'2021-01-01','2021-12-01')
+        #df2 = Kl.data_engine.get_day(df['name'],df['code'],'2023-01-01','2021-12-01')
         get_features(df['df'],df['code'])
     except KeyboardInterrupt:
         df_ret = pd.DataFrame(all_list)

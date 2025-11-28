@@ -8,12 +8,14 @@ from .Kdatas import *            #2.
 from .KSeq2Feature import *      #3. 特征计算
 from .tdx import *               # tdx公式算法
 from .Kfeature import *
+from .data_manager import day_data_manager, week_data_manager, month_data_manager
+from .data_source_config import set_data_source, get_data_source
 
 #2023.03.19
 version="0.9.9"
 
-#1. Kl 是全局使用的变量 
-# 共享 Kl 给 kdatas 
+#1. Kl 是全局使用的变量
+# 共享 Kl 给 kdatas
 setstock(Kl)
 
 #2. init Klang
@@ -40,7 +42,7 @@ __all__ = [
     "WCLOSE", "WC",
     "WVOLUME", "WV", "WVOL",
     "WTURN","WT",
- 
+
     "MOPEN", "MO",
     "MHIGH", "MH",
     "MLOW", "ML",

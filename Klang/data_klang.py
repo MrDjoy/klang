@@ -16,13 +16,14 @@ import pandas as pd
 from .common import end,get_date
 from threading import Lock
 from progress.bar import Bar
+from .baostock_data import BaoStockData
 
 hostname="https://data.klang.org.cn/api"
 
 session = requests.Session()
 
 def gethostname():
-   
+
     serveriplist = []
     url = 'https://www.klang.org.cn/api/sysconfigs?keyword=data&filter=1'
     resp = requests.get(url).json()
@@ -34,7 +35,7 @@ def gethostname():
     else:
         host = serveriplist[0] + "/api"
     return host
-    
+
 hostname = gethostname()
 
 class DataAPI():
@@ -72,7 +73,7 @@ mutex = Lock()
 #['code','name','SCR','tdxbk','tdxgn']
 stocklist=[]
 stockindex={}
-stockupdate={} # code, day, week, month ,日，周，月更新日期 
+stockupdate={} # code, day, week, month ,日，周，月更新日期
 kapi = DataAPI()
 
 
@@ -121,7 +122,7 @@ def json_to_df(json,setindex=False):
     return datas
 
 
-       
+
 
 class GetData:
     def __init__(self,freq="d"):
@@ -154,8 +155,8 @@ class GetData:
         df = pd.json_normalize(content+jsondata)
         df1 = df[~df.date.duplicated(keep='first')]
         return json.loads(df1.to_json(orient="records"))
-    
- 
+
+
 
     def _read_file_data(self,code):
         ext_table = {"d":"day","w":"week","m":"month"}
@@ -170,11 +171,18 @@ class GetData:
         f1.close()
         stock    = json.loads(content)
         jsondata = stock[2]
-        #print('正在获取',name,'代码',code)
+        # print("获取" + code + "股票数据 : ")
+        # print(jsondata)
         df = json_to_df(jsondata)
         df['datetime'] = df['date']
         df = df.set_index('date')
+        # print(df)
         return df
+
+    def _read_server_data_from_baostock(self,code,start,end,setindex=False,json=False,append=False):
+        bstock = BaoStockData(freq=self.freq)
+        data = bstock.get_data(code,start,end,json)
+        return data
 
     def _read_server_data(self,code,start,end,setindex=False,json=False,append=False):
         ext_table = {"d":"/dayks","w":"/weeks","m":"/months"}
@@ -214,7 +222,8 @@ class GetData:
 
         name = Kl.stockdict[code]['name']
         # 1. 从服务器下载数据
-        jsondata = self._read_server_data(code,start,end,json=True)
+        # jsondata = self._read_server_data(code,start,end,json=True)
+        jsondata = self._read_server_data_from_baostock(code,start,end,json=True)
 
         # 2. 保存到本地硬盘，
         content = json.dumps([code,name,jsondata])
@@ -246,14 +255,15 @@ class GetData:
 
         if not os.path.exists(get_path("~/.klang/"+ext+"/" +code+ ext + ".json")):
             return self.get_data(Kl,code,Kl.start_date,Kl.end_date)
-        
+
         today = get_date(0)
 
         name = Kl.stockdict[code]['name']
-        lastday = stockupdate.get(code,{}).get(ext,'2021-01-01')
+        lastday = stockupdate.get(code,{}).get(ext,'2023-01-01')
         if lastday == today and check:
-            return 
-        jsondata = self._read_server_data(code,lastday,Kl.end_date,json=True,append=True)
+            return
+        # jsondata = self._read_server_data(code,lastday,Kl.end_date,json=True,append=True)
+        jsondata = self._read_server_data_from_baostock(code,lastday,Kl.end_date,json=True,append=True)
         jsondata = self.append_data(code,jsondata)
 
         content = json.dumps([code,name,jsondata])
@@ -265,7 +275,7 @@ class GetData:
             stockupdate[code] = {}
 
         stockupdate[code][ext] = get_date(0)
-        
+
 
 # 下载所有的股票
 def downloadstockdata(Kl):
@@ -344,14 +354,14 @@ def updatestocklist(stname=filename_sl):
     print("因子加载完成")
 
     df = pd.json_normalize(stocklist)
-    
+
     # 结果集输出到csv文件
-    df.to_csv(stname, index=False,columns=['code','name','SCR','tdxbk','tdxgn'])  
+    df.to_csv(stname, index=False,columns=['code','name','SCR','tdxbk','tdxgn'])
 
 
 def init_stock_list(Kl,offset=0):
     global stocklist,stockupdate
-   
+
     if not os.path.exists(filename_sl):
         print('正在下载股票库列表....')
         updatestocklist(filename_sl)
@@ -362,7 +372,7 @@ def init_stock_list(Kl,offset=0):
     stocklines = open(filename_sl,encoding='utf-8').readlines()
     stocklines = stocklines[1:] #删除第一行
 
-    index = 0 
+    index = 0
     for i in stocklines:
         i = i.strip()
         code,name,scr,tdxbk,tdxgn = i.split(',')
