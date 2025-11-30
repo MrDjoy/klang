@@ -8,3 +8,5 @@ python-socketio[client]
 baostock
 notebook
 TA-Lib
+yfinance
+seaborn
