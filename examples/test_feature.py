@@ -84,7 +84,8 @@ def get_feature(df1,target,code):
 
 all_list = []
 def get_features(df,code):
-    
+    if df is None:
+        print('no data')
     for i in range(60,len(df)-10):
 
         m = max(df['close'].values[i+1:i+10]) / df['close'].values[i]
@@ -99,18 +100,17 @@ def get_features(df,code):
 
 Klang_init()
 
-for df in Kl.df_all:
+for df in Kl.stocklist:
     try:
         Kl.code(df['code'])
         print("****",df['code'],df['name'],C,"****")
-        #df2 = Kl.data_engine.get_day(df['name'],df['code'],'2023-01-01','2021-12-01')
-        get_features(df['df'],df['code'])
+        get_features(Kl.day_df,df['code'])
     except KeyboardInterrupt:
         df_ret = pd.DataFrame(all_list)
-        df_ret.to_csv("~/.test_feat.csv")
+        df_ret.to_csv("D:/klang_data/test_feat.csv")
         break
     except :
         pass
     
 df_ret = pd.DataFrame(all_list)
-df_ret.to_csv("~/.test_feat.csv")
+df_ret.to_csv("D:/klang_data/test_feat.csv")

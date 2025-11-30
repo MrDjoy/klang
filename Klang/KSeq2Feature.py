@@ -7,45 +7,50 @@ class SequenceTransformer():
             if callable(getattr(fc,fn)) and 'stypes' in getattr(fc,fn).__dict__ :
                 all_fns[getattr(fc,fn).__dict__['name']] = {'func':getattr(fc,fn),'name':getattr(fc,fn).__dict__['name']}
 
+        try:
+            if calculators is None:
+                self.fns = all_fns
+            else:
+                self.fns = {}
+                for c in calculators:
 
-        if calculators is None:
-            self.fns = all_fns
-        else:
-            self.fns = {}
-            for c in calculators:
+                     if c.get("fname"):
+                        name = c.get("fname")
+                     else:
+                        name = c.get("name")
 
-                 if c.get("fname"):
-                    name = c.get("fname")
-                 else:
-                    name = c.get("name")
-                       
-                 self.fns[name] = all_fns[c.get("name")]
-                 if c.get('param'):
-                    self.fns[name]['param'] = c.get('param')
-                 if c.get('compare'):
-                    self.fns[name]['compare'] = c.get('compare')
+                     self.fns[name] = all_fns[c.get("name")]
+                     if c.get('param'):
+                        self.fns[name]['param'] = c.get('param')
+                     if c.get('compare'):
+                        self.fns[name]['compare'] = c.get('compare')
 
-                 self.fns[name]['name'] = name
+                     self.fns[name]['name'] = name
 
-        if addcalc is not None:
-            for c in addcalc:
-                name = c.get('name')
-                fname = c.get('fname')
-                self.fns[fname] = {
-                    'func':all_fns[name].get('func'),
-                    'name':fname,
-                    'param':c.get('param'),
-                    'compare':c.get('compare'),
-                }
+            if addcalc is not None:
+                for c in addcalc:
+                    name = c.get('name')
+                    fname = c.get('fname')
+                    self.fns[fname] = {
+                        'func':all_fns[name].get('func'),
+                        'name':fname,
+                        'param':c.get('param'),
+                        'compare':c.get('compare'),
+                    }
 
 
-        # 按类型 整理
-        # 0 for boolean, 1 for numericla, 2 for categorical
-        self.type_fns = {0:[],1:[],2:[]}
+            # 按类型 整理
+            # 0 for boolean, 1 for numericla, 2 for categorical
+            self.type_fns = {0:[],1:[],2:[]}
 
-        for fname,func in self.fns.items():
-            for i in func.get('func').__dict__['stypes']:
-                self.type_fns[i].append(fname)
+            for fname,func in self.fns.items():
+                for i in func.get('func').__dict__['stypes']:
+                    self.type_fns[i].append(fname)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(all_fns)
+            print(self.fns)
 
     def get_feature_names(self):
         """

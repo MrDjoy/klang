@@ -6,3 +6,5 @@ progress
 eventlet
 python-socketio[client]
 baostock
+notebook
+TA-Lib

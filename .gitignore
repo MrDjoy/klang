@@ -161,3 +161,7 @@ cython_debug/
 
 # osx finder
 .DS_Store
+
+.idea/*.iml
+
+uv.lock

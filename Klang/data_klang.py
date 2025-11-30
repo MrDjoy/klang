@@ -54,16 +54,24 @@ def get_path(name):
     t = os.path.expanduser(name)
     return os.path.normpath(t)
 
-data_path = get_path("~/.klang")
-os.makedirs(data_path, exist_ok=True)
+# 数据存储目录配置，可通过环境变量KLANG_DATA_DIR修改
+default_data_dir = "D:/klang_data"  # 默认D盘根目录
+data_path = os.getenv("KLANG_DATA_DIR", default_data_dir)
+if data_path == default_data_dir:  # 如果使用默认路径，检查路径是否存在
+    if not os.path.exists(data_path):
+        try:
+            os.makedirs(data_path, exist_ok=True)
+        except:
+            data_path = get_path("~/.klang")  # 回退到原路径
 
+os.makedirs(data_path, exist_ok=True)
 os.makedirs(get_path(data_path+"/day"), exist_ok=True)
 os.makedirs(get_path(data_path+"/week"), exist_ok=True)
 os.makedirs(get_path(data_path+"/month"), exist_ok=True)
 
 
-filename_sl = get_path("~/.klang/klang_stock_list.csv")
-file_updata_list = get_path("~/.klang/update_list.csv")
+filename_sl = get_path(data_path+"/klang_stock_list.csv")
+file_updata_list = get_path(data_path+"/update_list.csv")
 
 
 mutex = Lock()
@@ -142,7 +150,7 @@ class GetData:
 
         # 可能是文件不存在的情况
         try:
-            f1 = open(get_path("~/.klang/"+ ext + "/"+code+ ext + ".json"),"r")
+            f1 = open(get_path(data_path+"/"+ ext + "/"+code+ ext + ".json"),"r")
             content1 = f1.read()
             f1.close()
 
@@ -162,10 +170,10 @@ class GetData:
         ext_table = {"d":"day","w":"week","m":"month"}
         ext = ext_table.get(self.freq,"day")
 
-        if not os.path.exists(get_path("~/.klang/"+ext +"/" +code+ ext + ".json")):
+        if not os.path.exists(get_path(data_path+"/"+ext +"/" +code+ ext + ".json")):
             return pd.DataFrame([])
 
-        f1 = open(get_path("~/.klang/"+ ext + "/"+ code+ ext + ".json"),"r")
+        f1 = open(get_path(data_path+"/"+ ext + "/"+ code+ ext + ".json"),"r")
 
         content = f1.read()
         f1.close()
@@ -227,7 +235,7 @@ class GetData:
 
         # 2. 保存到本地硬盘，
         content = json.dumps([code,name,jsondata])
-        f1 = open(get_path("~/.klang/"+ ext +"/" + code+ ext + ".json"),"w+")
+        f1 = open(get_path(data_path+"/"+ ext +"/" + code+ ext + ".json"),"w+")
         f1.write(content)
         f1.close()
 
@@ -253,7 +261,7 @@ class GetData:
         ext_table = {"d":"day","w":"week","m":"month"}
         ext = ext_table.get(self.freq,"day")
 
-        if not os.path.exists(get_path("~/.klang/"+ext+"/" +code+ ext + ".json")):
+        if not os.path.exists(get_path(data_path+"/"+ext+"/" +code+ ext + ".json")):
             return self.get_data(Kl,code,Kl.start_date,Kl.end_date)
 
         today = get_date(0)
@@ -267,7 +275,7 @@ class GetData:
         jsondata = self.append_data(code,jsondata)
 
         content = json.dumps([code,name,jsondata])
-        f1 = open(get_path("~/.klang/"+ ext +"/" +code+ ext+ ".json"),"w+")
+        f1 = open(get_path(data_path+"/"+ ext +"/" +code+ ext+ ".json"),"w+")
         f1.write(content)
         f1.close()
 

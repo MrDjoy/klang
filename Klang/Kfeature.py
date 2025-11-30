@@ -440,7 +440,8 @@ def _none_rate(x:list):
 ################
 # stock calc
 ###############
-"""
+import talib
+
 @set_property("name","ma","stypes",[1])
 def _ma(x:list,param=5):
     # param is N  peroid
@@ -453,7 +454,6 @@ def _macd(x:list,param=(12,21,9)):
     macd = macd * 2
 
     return macd[-1]
-"""
 
 @set_property("name","rise","stypes",[1])
 def _rise(x:list,param=-2):

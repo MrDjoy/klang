@@ -30,7 +30,7 @@ def getstockdata(name):
     kl.get_day()
 
     return kl.day_df[name]
-        
+
 #做类似C/C[1]计算
 #计算涨跌率
 #C和C1都是列表，numpy计算的时候需要同样list size
@@ -91,7 +91,7 @@ class KdataBase(object):
         return n
     # <
     def __lt__(self, other):
-        if isinstance(other,KdataBase):  
+        if isinstance(other,KdataBase):
             kb = KdataBase()
             d1,d2 = match_size(self.data,other.data)
             kb._data = d1 < d2
@@ -101,14 +101,14 @@ class KdataBase(object):
             kb = KdataBase()
             kb._data = self.data < other
             kb.dtype = bool
-            return kb     
+            return kb
         else: #int float
             return self.value < other
 
 
     # >
     def __gt__(self, other):
-        if isinstance(other,KdataBase):  
+        if isinstance(other,KdataBase):
             kb = KdataBase()
             d1,d2 = match_size(self.data,other.data)
             kb._data = d1 > d2
@@ -118,14 +118,14 @@ class KdataBase(object):
             kb = KdataBase()
             kb._data = self.data > other
             kb.dtype = bool
-            return kb             
+            return kb
         else: #int float
             return self.value > other
 
 
     # ==
     def __eq__(self, other):
-        if isinstance(other,KdataBase):  
+        if isinstance(other,KdataBase):
             kb = KdataBase()
             d1,d2 = match_size(self.data,other.data)
             kb._data = d1 == d2
@@ -135,14 +135,14 @@ class KdataBase(object):
             kb = KdataBase()
             kb._data = self.data == other
             kb.dtype = bool
-            return kb             
+            return kb
         else: #int float
             return self.value == other
 
 
     # !=
     def __ne__(self, other):
-        if isinstance(other,KdataBase):  
+        if isinstance(other,KdataBase):
             kb = KdataBase()
             d1,d2 = match_size(self.data,other.data)
             kb._data = d1 != d2
@@ -152,14 +152,14 @@ class KdataBase(object):
             kb = KdataBase()
             kb._data = self.data != other
             kb.dtype = bool
-            return kb             
+            return kb
         else: #int float
             return self.value != other
 
 
     # >=
     def __ge__(self, other):
-        if isinstance(other,KdataBase):  
+        if isinstance(other,KdataBase):
             kb = KdataBase()
             d1,d2 = match_size(self.data,other.data)
             kb._data = d1 >= d2
@@ -169,14 +169,14 @@ class KdataBase(object):
             kb = KdataBase()
             kb._data = self.data >= other
             kb.dtype = bool
-            return kb 
+            return kb
         else: #int float
             return self.value >= other
 
 
-    # <= 
+    # <=
     def __le__(self, other):
-        if isinstance(other,KdataBase):  
+        if isinstance(other,KdataBase):
             kb = KdataBase()
             d1,d2 = match_size(self.data,other.data)
             kb._data = d1 <= d2
@@ -186,13 +186,13 @@ class KdataBase(object):
             kb = KdataBase()
             kb._data = self.data <= other
             kb.dtype = bool
-            return kb             
+            return kb
         else: #int float
             return self.value <= other
 
        # +
     def __add__(self,other):
-        if isinstance(other,KdataBase):  
+        if isinstance(other,KdataBase):
             kb = KdataBase()
             d1,d2 = match_size(self.data,other.data)
             kb._data = d1 + d2
@@ -200,12 +200,12 @@ class KdataBase(object):
         if isinstance(other,float) or isinstance(other,int):
             kb = KdataBase()
             kb._data = self.data + other
-            return kb             
+            return kb
         else: #int float
             return self.value + other
     # -
     def __sub__(self,other):
-        if isinstance(other,KdataBase):  
+        if isinstance(other,KdataBase):
             kb = KdataBase()
             d1,d2 = match_size(self.data,other.data)
             kb._data = d1 - d2
@@ -213,12 +213,12 @@ class KdataBase(object):
         if isinstance(other,float) or isinstance(other,int):
             kb = KdataBase()
             kb._data = self.data - other
-            return kb 
+            return kb
         else: #int float
             return self.value - other
     # -
     def __rsub__(self,other):
-        if isinstance(other,KdataBase):  
+        if isinstance(other,KdataBase):
             kb = KdataBase()
             d1,d2 = match_size(self.data,other.data)
             kb._data = d2 - d1
@@ -226,13 +226,13 @@ class KdataBase(object):
         if isinstance(other,float) or isinstance(other,int):
             kb = KdataBase()
             kb._data = self.data - other
-            return kb             
+            return kb
         else: #int float
             return other - self.value
 
     # *
     def __mul__(self,other):
-        if isinstance(other,KdataBase):  
+        if isinstance(other,KdataBase):
             kb = KdataBase()
             d1,d2 = match_size(self.data,other.data)
             kb._data = d1 * d2
@@ -240,14 +240,14 @@ class KdataBase(object):
         if isinstance(other,float) or isinstance(other,int):
             kb = KdataBase()
             kb._data = self.data * other
-            return kb             
+            return kb
         else: #int float
             return round(self.value * other,3)
 
-    # / 
+    # /
     def __truediv__(self, other):
         #s1 , s2 = match_size(self.data,other.data)
-        if isinstance(other,KdataBase):  
+        if isinstance(other,KdataBase):
             kb = KdataBase()
             d1,d2 = match_size(self.data,other.data)
             kb._data = d1 / d2
@@ -255,13 +255,13 @@ class KdataBase(object):
         if isinstance(other,float) or isinstance(other,int):
             kb = KdataBase()
             kb._data = self.data / other
-            return kb             
+            return kb
         else:
             return round(self.value / other,3)
 
     def __rtruediv__(self, other):
         #s1 , s2 = match_size(self.data,other.data)
-        if isinstance(other,KdataBase):  
+        if isinstance(other,KdataBase):
             kb = KdataBase()
             d1,d2 = match_size(self.data,other.data)
             kb._data = d2 / d1
@@ -269,7 +269,7 @@ class KdataBase(object):
         if isinstance(other,float) or isinstance(other,int):
             kb = KdataBase()
             kb._data = self.data / other
-            return kb             
+            return kb
         else:
             return round(other / self.value,3)
 
@@ -291,13 +291,13 @@ class Kdatas(KdataBase):
         self.dfstart      = -1 #stock start date
         self.dfend        = -1 #stock end date
         self.index        = index     #C,C[1],C[2]
-    
+
      #返回最后一天的数据
     @property
     def value(self):
         if len(self.data) <1:
             return None
-        return self.dtype(self.data[-1])
+        return self.dtype(self.data.iloc[-1])
 
     #比较code 值的目的是切换股票的时候刷新
     @property
@@ -326,7 +326,7 @@ class KWdatas(Kdatas):
             return kl.week_df[name]
         kl.get_week()
         return kl.week_df[name]
- 
+
     @property
     def data(self):
         if len(self._data) == 0 or self.cur_code != kl.cur_code:
@@ -363,7 +363,7 @@ class KMdatas(Kdatas):
         return self._data
 
 
-     
+
 # create open high low close volume datetime
 # 建立全局的 o,O,OPEN,等关键词
 for name in ["open", "high", "low", "close", "volume", 'vol','amount','datetime','turn']:
