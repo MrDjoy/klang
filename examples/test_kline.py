@@ -18,7 +18,7 @@ date = Kl.date
 start_date='2025-01-01'
 end_date='2025-12-01'
 date(start_date, end_date)
-code('sh.600004')
+code('sh.600033')
 
 stock_data = Kl.day_df
 
@@ -50,6 +50,8 @@ kline = (
         ),
     )
 )
+
+
 
 # 渲染图表
 kline.render(f"{Kl.cur_code}_{Kl.cur_name}_{start_date}_{end_date}.html")

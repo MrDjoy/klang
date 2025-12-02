@@ -8,16 +8,18 @@
 import pandas as pd
 
 from Klang import Klang
+from Klang.pattern.qs_patterns import QsPatterns
+from Klang.pattern.double_vol_indicator import DoubleVolIndicator
 
-def recall_stock(start_date=Klang.get_date(14), end_date=Klang.get_date(0), filter688=True, filterST=True):
+def recall_stock(limit:int = 10,start_date=Klang.get_date(14), end_date=Klang.get_date(0), filter688=True, filterST=True):
     Klang.Klang_init()
     kl = Klang.Kl
-    code = kl.code
-    date = kl.date
-    date(start_date, end_date)
+    Klang.Kl.date(start_date, end_date)
 
     list_a = []
     list_b = []
+    big_up_cnt = 0
+    fake_up_cnt = 0
     for stock in kl.stocklist:
         # 过滤掉ST股票
         if filterST and stock['name'].startswith('*ST'):
@@ -26,28 +28,20 @@ def recall_stock(start_date=Klang.get_date(14), end_date=Klang.get_date(0), filt
         if filter688 and stock['code'].startswith('sh.688'):
             continue
 
-        code(stock['code'])
+        Klang.Kl.code(stock['code'])
 
-        # 预处理数据
-        df = kl.day_df.astype({'close': float, 'open': float, 'high': float, 'vol': int})
+        v2i = DoubleVolIndicator(kl.day_df)
+        v2idf = v2i.get_double_vol_df()
 
-        # 计算条件
-        vol_condition = df['vol'] >= df['vol'].shift(1) * 2
-        up_candle = df['close'] > df['open']
-        big_up = df['close'] / df['close'].shift(1) >= 1.07
-        fake_up = df['high'] / df['open'] >= 1.07
+        #valid_indices = v2idf[v2idf['vol2'] == 1].index
+        for index, row in v2idf.iterrows():
+            if row['vol2'] == 1:
+                print("放量日期:", kl.cur_name, kl.cur_code, index)
+                list_a.append({'code': kl.cur_code, 'name': kl.cur_name, 'date': index, 'type': 1})
+                big_up_cnt += 1
 
-        # 筛选符合条件的日期
-        condition_a = vol_condition & up_candle & big_up
-        condition_b = vol_condition & up_candle & ~big_up & fake_up
-
-        for date_idx in df.index[condition_a]:
-            print("放量大阳线:", kl.cur_name, kl.cur_code, date_idx)
-            list_a.append({'code': kl.cur_code, 'name': kl.cur_name, 'date': date_idx, 'type': 1})
-
-        for date_idx in df.index[condition_b]:
-            print("放量假阳线:", kl.cur_name, kl.cur_code, date_idx)
-            list_b.append({'code': kl.cur_code, 'name': kl.cur_name, 'date': date_idx, 'type': 2})
+        if big_up_cnt >= limit:
+            break
 
     print(f"放量大阳线:{len(list_a)} 放量假阳线:{len(list_b)}")
     return list_a, list_b
@@ -55,4 +49,29 @@ def recall_stock(start_date=Klang.get_date(14), end_date=Klang.get_date(0), filt
 
 if __name__ == '__main__':
     pd.set_option('display.max_columns', None)
-    recall_stock()
+    lista, _ = recall_stock(10)
+    for up_stock in lista:
+        print(up_stock)
+        Klang.Kl.date('2024-06-01', '2025-12-01')
+        Klang.Kl.code(up_stock['code'])
+        day_df = Klang.Kl.day_df
+        vol2df = DoubleVolIndicator(day_df).get_double_vol_df()
+        qs = QsPatterns(vol2df)
+        qs.pattern_detection()
+        qsdf = qs.get_qs_df()
+        print(qsdf)
+        # 获取最近试盘点
+        shipan = []
+        try:
+            shipandf = qsdf[qsdf['vol2'] == 1]
+            shipan.append(shipandf.iloc[-1]['high'])
+            shipan.append(qsdf.index.get_loc(shipandf.index.values[-1]))
+            shipan.append(1)
+        except KeyError:
+            print(f"警告：在{up_stock['code']}中未找到日期{up_stock['date']}")
+            exit(1)
+
+        print(f"试盘信息{shipan}")
+        list3_2 = qs.find_success_shipan(shipan)
+
+

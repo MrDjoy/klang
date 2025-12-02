@@ -308,8 +308,8 @@ def downloadstockdata(Kl):
 # 更新所有的股票
 # 更新仅仅更新日K，下载是下载日，月，周
 def updatestockdata(Kl,check=True):
-    if Kl.canUpdate == False: #仅仅一个server更新，其他server直接返回
-        return
+    # if Kl.canUpdate == False: #仅仅一个server更新，其他server直接返回
+    #     return
 
     bar = Bar('Downloading ',max=len(Kl.stocklist))
     bar.is_tty = lambda :True

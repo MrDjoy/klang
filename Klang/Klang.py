@@ -105,8 +105,8 @@ def Klang_init():
     Kl.stocklist = Kl.data_engine.init_stock_list(Kl)
 
     #异步加载df 放到df_all
-    t = threading.Thread(target=Kl.get_all_data)
-    t.start()
+    # t = threading.Thread(target=Kl.get_all_data)
+    # t.start()
 
     Kl.cur_code = Kl.stocklist[0]['code']    
     Kl.cur_name = Kl.stocklist[0]['name']    
