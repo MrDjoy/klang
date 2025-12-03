@@ -5,6 +5,10 @@
 @Author  : dingyi11@baidu.com
 @File    : test_pyecharts
 """
+import pandas as pd
+
+from Klang.draw_kline import DrawKline
+
 """
 复刻的 Echarts 的 demo 链接
 https://gallery.echartsjs.com/editor.html?c=xByOFPcjBe
@@ -322,6 +326,60 @@ echarts_data = [
     ["2017-01-03", 17.6, 17.92, 17.57, 17.98, 28.00, 1, 0.00, 0.00, 0.00],
 ]
 
+from Klang import Klang
+from Klang.pattern.double_vol_indicator import DoubleVolIndicator
+from Klang.pattern.qs_patterns import QsPatterns
+
+
+Klang.Klang_init()
+Kl = Klang.Kl
+code = Kl.code
+date = Kl.date
+start_date='2024-06-01'
+end_date='2025-12-01'
+date(start_date, end_date)
+# code('sz.301567')
+# code('sz.002046')
+code('sz.002855')
+stock_data = Kl.day_df
+print(stock_data)
+
+v2i = DoubleVolIndicator(stock_data, fakeup=True)
+# 成交量翻倍
+vol2df = v2i.get_double_vol_df()
+# 趋势拐点检测
+qs = QsPatterns(vol2df, 0.1)
+qs.pattern_detection()
+qsdf = qs.get_qs_df()
+shipan = []
+shipandf = qsdf[qsdf['vol2'] == 1]
+print(shipandf)
+shipan.append(shipandf.iloc[-1]['high']) # 试盘价
+shipan.append(qsdf.index.get_loc(shipandf.index.values[-1])) #试盘在整个数据中位置
+shipan.append(2) #试盘类型
+shipan.append(shipandf.index.values[-1]) #日期
+print(qsdf[qsdf['qs'] != -1])
+print(shipan)
+# 试盘成功检测
+qs.find_success_shipan(shipan)
+
+def split_data2(data_pd: pd.DataFrame) ->dict:
+
+    # 时间
+    times = data_pd.index.values.tolist()
+    # 成交量
+    vols = data_pd['vol'].values.tolist()
+    # 价格数据
+    datas = []
+    for index, row in data_pd.iterrows():
+        prices = [row[col] for col in ['open', 'close', 'low', 'high', 'vol', 'vol2']]
+        # print(f"open: {prices[0]} close: {prices[1]} low: {prices[2]} high: {prices[3]}")
+        datas.append(prices)
+    return {
+        "datas": datas,
+        "times": times,
+        "vols": vols
+    }
 
 def split_data(origin_data) -> dict:
     datas = []
@@ -349,6 +407,40 @@ def split_data(origin_data) -> dict:
         "deas": deas,
     }
 
+def split_shipan_data() -> Sequence:
+    mark_line_data = []
+    p = qs.shipan_suc_list
+    for i in range(len(p)):
+        j = i + 1
+        if j >= len(p):
+            break
+        mark_line_data.append(
+            [
+                {
+                    "xAxis": p[i][1],
+                    "yAxis": float(p[i][0]),
+                    # "value": vols, # 线上面值？
+                },
+                {
+                    "xAxis": p[j][1],
+                    "yAxis": float(p[j][0]),
+                },
+            ]
+        )
+    return mark_line_data
+
+def split_qushi_data() -> Sequence:
+    mark_point_data = []
+    p = qs.high_low_list
+    for i in range(len(p)):
+        # mark_point_data.append({
+        #     "x": p[i][1],
+        #     "y": float(p[i][0]),
+        #     "name": "拐点"
+        # })
+        #mark_point_data.append(opts.MarkPointItem(x=p[i][1], y=float(p[i][0]), name="x"))
+        mark_point_data.append(opts.MarkPointItem(coord=[p[i][1], float(p[i][0])], name="拐点"))
+    return mark_point_data
 
 def split_data_part() -> Sequence:
     mark_line_data = []
@@ -436,24 +528,30 @@ def draw_chart():
                 border_color0="#14b143",
             ),
             markpoint_opts=opts.MarkPointOpts(
-                data=[
-                    opts.MarkPointItem(type_="max", name="最大值"),
-                    opts.MarkPointItem(type_="min", name="最小值"),
-                ]
+                label_opts=opts.LabelOpts(
+                    position="middle", color="blue", font_size=15
+                ),
+                # data=[
+                #     opts.MarkPointItem(type_="max", name="最大值"),
+                #     opts.MarkPointItem(type_="min", name="最小值"),
+                # ]
+                data = split_qushi_data(),
+                symbol="triangle",
+                symbol_size=5,
             ),
             markline_opts=opts.MarkLineOpts(
                 label_opts=opts.LabelOpts(
                     position="middle", color="blue", font_size=15
                 ),
-                data=split_data_part(),
-                symbol=["circle", "none"],
+                data=split_shipan_data(),
+                symbol="circle",
             ),
         )
         .set_series_opts(
-            markarea_opts=opts.MarkAreaOpts(is_silent=True, data=split_data_part())
+            markarea_opts=opts.MarkAreaOpts(is_silent=True, data=split_shipan_data())
         )
         .set_global_opts(
-            title_opts=opts.TitleOpts(title="K线周期图表", pos_left="0"),
+            title_opts=opts.TitleOpts(title=Kl.cur_code+Kl.cur_name, pos_left="0"),
             xaxis_opts=opts.AxisOpts(
                 type_="category",
                 is_scale=True,
@@ -547,6 +645,13 @@ def draw_chart():
                     var colorList;
                     if (barData[params.dataIndex][1] > barData[params.dataIndex][0]) {
                         colorList = '#ef232a';
+                        if (params.dataIndex > 0) {
+                            var currentData = barData[params.dataIndex];
+                            var prevData = barData[params.dataIndex - 1];
+                            if (currentData[5] == 1) {
+                                colorList = '#FFD700';
+                            }
+                        }
                     } else {
                         colorList = '#14b143';
                     }
@@ -567,70 +672,70 @@ def draw_chart():
     )
 
     # Bar-2 (Overlap Bar + Line)
-    bar_2 = (
-        Bar()
-        .add_xaxis(xaxis_data=data["times"])
-        .add_yaxis(
-            series_name="MACD",
-            y_axis=data["macds"],
-            xaxis_index=2,
-            yaxis_index=2,
-            label_opts=opts.LabelOpts(is_show=False),
-            itemstyle_opts=opts.ItemStyleOpts(
-                color=JsCode(
-                    """
-                        function(params) {
-                            var colorList;
-                            if (params.data >= 0) {
-                              colorList = '#ef232a';
-                            } else {
-                              colorList = '#14b143';
-                            }
-                            return colorList;
-                        }
-                        """
-                )
-            ),
-        )
-        .set_global_opts(
-            xaxis_opts=opts.AxisOpts(
-                type_="category",
-                grid_index=2,
-                axislabel_opts=opts.LabelOpts(is_show=False),
-            ),
-            yaxis_opts=opts.AxisOpts(
-                grid_index=2,
-                split_number=4,
-                axisline_opts=opts.AxisLineOpts(is_on_zero=False),
-                axistick_opts=opts.AxisTickOpts(is_show=False),
-                splitline_opts=opts.SplitLineOpts(is_show=False),
-                axislabel_opts=opts.LabelOpts(is_show=True),
-            ),
-            legend_opts=opts.LegendOpts(is_show=False),
-        )
-    )
+    # bar_2 = (
+    #     Bar()
+    #     .add_xaxis(xaxis_data=data["times"])
+    #     .add_yaxis(
+    #         series_name="MACD",
+    #         y_axis=data["macds"],
+    #         xaxis_index=2,
+    #         yaxis_index=2,
+    #         label_opts=opts.LabelOpts(is_show=False),
+    #         itemstyle_opts=opts.ItemStyleOpts(
+    #             color=JsCode(
+    #                 """
+    #                     function(params) {
+    #                         var colorList;
+    #                         if (params.data >= 0) {
+    #                           colorList = '#ef232a';
+    #                         } else {
+    #                           colorList = '#14b143';
+    #                         }
+    #                         return colorList;
+    #                     }
+    #                     """
+    #             )
+    #         ),
+    #     )
+    #     .set_global_opts(
+    #         xaxis_opts=opts.AxisOpts(
+    #             type_="category",
+    #             grid_index=2,
+    #             axislabel_opts=opts.LabelOpts(is_show=False),
+    #         ),
+    #         yaxis_opts=opts.AxisOpts(
+    #             grid_index=2,
+    #             split_number=4,
+    #             axisline_opts=opts.AxisLineOpts(is_on_zero=False),
+    #             axistick_opts=opts.AxisTickOpts(is_show=False),
+    #             splitline_opts=opts.SplitLineOpts(is_show=False),
+    #             axislabel_opts=opts.LabelOpts(is_show=True),
+    #         ),
+    #         legend_opts=opts.LegendOpts(is_show=False),
+    #     )
+    # )
 
-    line_2 = (
-        Line()
-        .add_xaxis(xaxis_data=data["times"])
-        .add_yaxis(
-            series_name="DIF",
-            y_axis=data["difs"],
-            xaxis_index=2,
-            yaxis_index=2,
-            label_opts=opts.LabelOpts(is_show=False),
-        )
-        .add_yaxis(
-            series_name="DIF",
-            y_axis=data["deas"],
-            xaxis_index=2,
-            yaxis_index=2,
-            label_opts=opts.LabelOpts(is_show=False),
-        )
-        .set_global_opts(legend_opts=opts.LegendOpts(is_show=False))
-    )
+    # line_2 = (
+    #     Line()
+    #     .add_xaxis(xaxis_data=data["times"])
+    #     .add_yaxis(
+    #         series_name="DIF",
+    #         y_axis=data["difs"],
+    #         xaxis_index=2,
+    #         yaxis_index=2,
+    #         label_opts=opts.LabelOpts(is_show=False),
+    #     )
+    #     .add_yaxis(
+    #         series_name="DIF",
+    #         y_axis=data["deas"],
+    #         xaxis_index=2,
+    #         yaxis_index=2,
+    #         label_opts=opts.LabelOpts(is_show=False),
+    #     )
+    #     .set_global_opts(legend_opts=opts.LegendOpts(is_show=False))
+    # )
     # 最下面的柱状图和折线图
-    overlap_bar_line = bar_2.overlap(line_2)
+    # overlap_bar_line = bar_2.overlap(line_2)
 
     # 最后的 Grid
     grid_chart = Grid()
@@ -652,15 +757,18 @@ def draw_chart():
         ),
     )
     # MACD DIFS DEAS
-    grid_chart.add(
-        overlap_bar_line,
-        grid_opts=opts.GridOpts(
-            pos_left="3%", pos_right="1%", pos_top="82%", height="14%"
-        ),
-    )
+    # grid_chart.add(
+    #     overlap_bar_line,
+    #     grid_opts=opts.GridOpts(
+    #         pos_left="3%", pos_right="1%", pos_top="82%", height="14%"
+    #     ),
+    # )
     grid_chart.render("professional_kline_chart.html")
 
 
 if __name__ == "__main__":
-    data = split_data(origin_data=echarts_data)
-    draw_chart()
+    # data = split_data(origin_data=echarts_data)
+    # data = split_data2(qsdf)
+    # draw_chart()
+    dk = DrawKline(Kl.cur_code, Kl.cur_name, qsdf, qs.high_low_list, qs.shipan_suc_list)
+    dk.draw_chart()

@@ -1,10 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-@Time    : 2025/12/2 19:15
+@Time    : 2025/12/2 15:46
 @Author  : dingyi11@baidu.com
-@File    : test_shipan
+@File    : test_pyecharts
 """
+import pandas as pd
+
+from Klang.draw_kline import DrawKline
+
+from typing import List, Sequence, Union
+
+from pyecharts import options as opts
+from pyecharts.commons.utils import JsCode
+from pyecharts.charts import Kline, Line, Bar, Grid
+
 from Klang import Klang
 from Klang.pattern.double_vol_indicator import DoubleVolIndicator
 from Klang.pattern.qs_patterns import QsPatterns
@@ -23,13 +33,13 @@ code('sz.002855')
 stock_data = Kl.day_df
 print(stock_data)
 
-
 v2i = DoubleVolIndicator(stock_data, fakeup=True)
+# 成交量翻倍
 vol2df = v2i.get_double_vol_df()
+# 趋势拐点检测
 qs = QsPatterns(vol2df, 0.1)
 qs.pattern_detection()
 qsdf = qs.get_qs_df()
-
 shipan = []
 shipandf = qsdf[qsdf['vol2'] == 1]
 print(shipandf)
@@ -39,5 +49,12 @@ shipan.append(2) #试盘类型
 shipan.append(shipandf.index.values[-1]) #日期
 print(qsdf[qsdf['qs'] != -1])
 print(shipan)
-
+# 试盘成功检测
 qs.find_success_shipan(shipan)
+
+if __name__ == "__main__":
+    # data = split_data(origin_data=echarts_data)
+    # data = split_data2(qsdf)
+    # draw_chart()
+    dk = DrawKline(Kl.cur_code, Kl.cur_name, qsdf, qs.high_low_list, qs.shipan_suc_list)
+    dk.draw_chart()

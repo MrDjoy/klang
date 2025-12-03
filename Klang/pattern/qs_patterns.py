@@ -17,8 +17,21 @@ class QsPatterns:
         self.min_low = 0
         self.high_low_list = []
         self.current_qs = None
-        # self.m = 0
-        # self.n = 0
+        self.zero_point = []
+        self.one_high = []
+        self.a_low = []
+        self.two_high = []
+        self.b_low = []
+        self.shipan = []
+        self.shipan_suc = {}
+        self.shipan_suc_list = []
+        self.score = 0
+        self.zreo_idx = 0
+        self.one_high_idx = 0
+        self.a_low_idx = 0
+        self.two_high_idx = 0
+        self.b_low_idx = 0
+        self.shipan_idx = 0
 
 
     def pattern_detection(self):
@@ -111,6 +124,10 @@ class QsPatterns:
         if len(self.high_low_list) < 3:
             print('记录点不足3个，无法形成3浪')
             return
+
+        # 试盘点加入列表
+        self.insert_point(shipan)
+
         zero_point = self.find_lowest()
         # 判断跌幅满足40%
         list0 = self.high_low_list[:self.index(zero_point)]
@@ -123,9 +140,11 @@ class QsPatterns:
                 print('没有找到跌幅超过40%的最低点')
                 return
         print(f"确定零点{zero_point} 前高{highest_fall}")
+        self.zero_point = zero_point
+        self.zreo_idx = self.index(zero_point)
         # 确定1高
         # 按照索引从零点向后遍历，找到比零点高的点，高点价格涨幅满足15%-100%，如果后续有更高的点更新，记录为1高
-        list1 = self.high_low_list[self.index(zero_point):]
+        list1 = self.high_low_list[self.index(zero_point):self.index(shipan)]
         one_high = None
         for i in range(len(list1)):
             if list1[i][2] == 1 and (list1[i][0] - zero_point[0]) / zero_point[0] > 0.15:
@@ -139,6 +158,40 @@ class QsPatterns:
                 # elif list1[i][0] < one_high[0]:
                 #     # 趋势下降
                 #     break
+
+        if one_high is None:
+            print(f'一高没有找到')
+            return
+
+        if one_high[1] > shipan[1]:
+            print(f'一高点不在试盘点之前 one_high:{one_high}, shipan:{shipan}')
+            return
+
+        self.one_high = one_high
+        self.one_high_idx = self.index(one_high)
+        self.shipan = shipan
+        self.shipan_idx = self.index(shipan)
+
+        # 确定二高
+        tow_high_list = []
+        for k in range(self.one_high_idx, self.shipan_idx):
+            if self.high_low_list[k][2] == 1:
+                if self.high_low_list[k][0] < one_high[0]:
+                    tow_high_list.append(self.high_low_list[k])
+
+        if not tow_high_list:
+            print("没有找到二高点")
+            return
+
+        # TODO 分两种情况 1. 一高和试盘之间只有一个高点，这个点是二高，判断二高点价格低于一高价和试盘价，二高前面低点是A点，后面低点是B点，试盘成功
+        # TODO 2. 一高和试盘之间有多个高点，先找到一高和试盘之间最低点，这个点是A点，下一个点是二高，再下个点是B点，试盘成功
+
+        if len(tow_high_list) == 1:
+            print("使用模型1检测试盘")
+            return self.do_shipan1(tow_high_list)
+        else:
+            print("使用模型2检测试盘")
+            return self.do_shipan2(tow_high_list)
 
         print(f"确定一高{one_high}")
         list2 = self.high_low_list[self.index(one_high):]
@@ -199,6 +252,121 @@ class QsPatterns:
 
         return list3_2
 
+
+    def add_shipan_succ(self):
+        self.shipan_suc = {
+            'zero_point': self.zero_point,
+            'one_high': self.one_high,
+            'a_low': self.a_low,
+            'two_high': self.two_high,
+            'b_low': self.b_low,
+            'shipan': self.shipan
+        }
+        self.shipan_suc_list = [self.zero_point, self.one_high, self.a_low, self.two_high, self.b_low, self.shipan]
+
+    def do_shipan1(self, two_high_list: list):
+        """
+        一高和试盘之间只有一个高点，这个点是二高，判断二高点价格低于一高价和试盘价，二高前面低点是A点，后面低点是B点，试盘成功
+        """
+        if len(two_high_list) == 1:
+            two_high = two_high_list[0]
+            if self.one_high[0] < two_high[0]:
+                print(f'一高{self.one_high} 价格小于二高价格{two_high}')
+                return
+            if self.shipan[0] < two_high[0]:
+                print(f'试盘失败! {self.shipan} 试盘价未突破二高价{two_high}')
+                return
+
+            self.two_high = two_high
+            self.two_high_idx = self.index(two_high)
+            # 找A点和B点
+            # 往前遍历找二高前的A点
+            a_low = None
+            for l in range(self.two_high_idx, self.one_high_idx, -1):
+                if self.high_low_list[l][2] == 0:
+                    a_low = self.high_low_list[l]
+                    break
+            if a_low is None:
+                print(f"没有找到A点 零点{self.zero_point} 一高{self.one_high} 二高{two_high} 试盘{self.shipan} ")
+                return
+
+            self.a_low = a_low
+            self.a_low_idx = self.index(a_low)
+
+            # 找B点
+            # 往后遍历找二高后的B点
+            b_low = None
+            for m in range(self.two_high_idx, self.shipan_idx):
+                if self.high_low_list[m][2] == 0:
+                    b_low = self.high_low_list[m]
+                    break
+            if b_low is None:
+                print(f"没有找到B点 零点{self.zero_point} 一高{self.one_high} 二高{two_high} 试盘{self.shipan}")
+                return
+
+            self.b_low = b_low
+            self.b_low_idx = self.index(b_low)
+            print(f"试盘成功，零点{self.zero_point} 一高{self.one_high} A点{a_low} 二高{two_high} B点{b_low} 试盘{self.shipan}")
+            self.add_shipan_succ()
+
+    def do_shipan2(self, two_high_list: list):
+        """
+        一高和试盘之间有多个高点，先找到一高和试盘之间最低点，这个点是A点，下一个高点是二高，再下个低点是B点，
+        如果高二满足价格小于一高和试盘价，侧试盘成功
+        """
+        # 找到一高和试盘之间的最低点（A点）
+        a_low = None
+        for i in range(self.one_high_idx, self.shipan_idx):
+            if self.high_low_list[i][2] == 0:  # 寻找低点
+                if a_low is None or self.high_low_list[i][0] < a_low[0]:
+                    a_low = self.high_low_list[i]
+
+        if a_low is None:
+            print("没有找到A点")
+            return
+
+        self.a_low = a_low
+        self.a_low_idx = self.index(a_low)
+
+        # 找到A点后的下一个高点（二高）
+        two_high = None
+        for i in range(self.a_low_idx + 1, self.shipan_idx):
+            if self.high_low_list[i][2] == 1:  # 寻找高点
+                two_high = self.high_low_list[i]
+                break
+
+        if two_high is None:
+            print("没有找到二高点")
+            return
+
+        # 验证二高价格约束
+        if two_high[0] > self.one_high[0]:
+            print(f"二高价格{two_high[0]}大于一高价格{self.one_high[0]}")
+            return
+
+        if two_high[0] > self.shipan[0]:
+            print(f"试盘失败，二高价格{two_high[0]} 试盘价格{self.shipan[0]}")
+            return
+
+        self.two_high = two_high
+        self.two_high_idx = self.index(two_high)
+
+        # 找到二高后的下一个低点（B点）
+        b_low = None
+        for i in range(self.two_high_idx + 1, self.shipan_idx):
+            if self.high_low_list[i][2] == 0:  # 寻找低点
+                b_low = self.high_low_list[i]
+                break
+
+        if b_low is None:
+            print("没有找到B点")
+            return
+
+        self.b_low = b_low
+        self.b_low_idx = self.index(b_low)
+        print(f"试盘成功，零点{self.zero_point} 一高{self.one_high} A点{a_low} 二高{two_high} B点{b_low} 试盘{self.shipan}")
+        self.add_shipan_succ()
+
     def index(self, point: list):
         try:
             index = self.high_low_list.index(point)
@@ -206,6 +374,42 @@ class QsPatterns:
             print(f"点{point}不在高低点列表中")
             return None
         return index
+
+    def insert_point(self, point: list):
+        """
+        在high_low_list中找到合适的插入位置，如果point已经存在，将原porint替换
+        :param point: 要插入的点 [price, index, type]
+        """
+        if not self.high_low_list:
+            return
+        # 遍历找到最后一个比point小的点
+        insert_index = len(self.high_low_list)  # 默认插入到最后
+        for i, existing_point in enumerate(self.high_low_list):
+            if existing_point[1] < point[1]:  # 比较index值
+                insert_index = i + 1
+            elif existing_point[1] == point[1]:
+                self.high_low_list[i] = point
+                print(f'替换点{point} 高低点列表{self.high_low_list} 替换位置{insert_index}')
+                return
+            else:
+                break
+
+        print(f'插入点{point} 高低点列表{self.high_low_list} 插入位置{insert_index}')
+
+        if insert_index >= len(self.high_low_list):
+            self.high_low_list.append(point)
+        else:
+            self.high_low_list.insert(insert_index, point)
+        print(f'插入点完成 {self.high_low_list}')
+
+    def insert_points(self, points: list):
+        """
+        在high_low_list中找到合适的插入位置
+        :param points: 要插入的点 [[price, index, type],[price, index, type]]
+        """
+        for point in points:
+            self.insert_point(point)
+
 
     def find_lowest(self):
         """

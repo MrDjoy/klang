@@ -8,5 +8,5 @@
 
 from Klang import Klang
 
-
+Klang.Klang_init()
 Klang.Kl.updateall()

@@ -10,7 +10,7 @@ import pandas as pd
 
 
 class DoubleVolIndicator:
-    def __init__(self, data: pd.DataFrame, volthr: int = 2, upthr: float = 1.07, fakeup: bool = False):
+    def __init__(self, data: pd.DataFrame, volthr: int = 2, upthr: float = 1.07, fakeup: bool = True):
         """
         初始化DoubleVolIndicator类实例。
 
