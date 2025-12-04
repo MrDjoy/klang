@@ -41,6 +41,7 @@ class BaoStockData:
 
         df = rs.get_data()
 
+        print(f"{code} {rs}")
         # 转换数据类型
         for col in ['open', 'high', 'low', 'close', 'volume', 'turn']:
             df[col] = pd.to_numeric(df[col], errors='coerce')

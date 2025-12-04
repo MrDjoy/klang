@@ -11,3 +11,5 @@ TA-Lib
 yfinance
 seaborn
 pyecharts
+plotly
+akshare

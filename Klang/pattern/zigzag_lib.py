@@ -216,9 +216,9 @@ def peak_valley_pivots_np(X,step=3):
             if X[i] == np.amin(x1) and X[i] < X[preindex]:
                 preindex = i
     # 补充最后一个
-    if trend == 1:
-        pivots[preindex] = 1
-    else:
-        pivots[preindex] = -1
+    # if trend == 1:
+    #     pivots[preindex] = 1
+    # else:
+    #     pivots[preindex] = -1
 
     return pivots

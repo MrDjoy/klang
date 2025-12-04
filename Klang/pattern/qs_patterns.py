@@ -7,6 +7,7 @@
 """
 
 import pandas as pd
+from .zigzag_lib import peak_valley_pivots_np
 
 class QsPatterns:
 
@@ -32,6 +33,73 @@ class QsPatterns:
         self.two_high_idx = 0
         self.b_low_idx = 0
         self.shipan_idx = 0
+
+    def peak_valley_pivots_np(X, step=3):
+        pivots = np.zeros(len(X), dtype='i1')
+        if len(X) < 2:
+            return [0]
+
+        preindex = 0
+        # 获取第一个趋势
+        if X[0] < X[1]:
+            trend = -1
+        else:
+            trend = 1
+
+        for i in range(0, len(X)):
+            l = i - step
+            r = i + step
+            if l < 0:
+                l = 0
+            if l < preindex:
+                l = preindex
+
+            x1 = X[l:r]
+            if trend == 1:
+
+                if X[i] == np.amin(x1):
+                    trend = -1
+                    pivots[preindex] = 1
+                    preindex = i
+
+                if X[i] == np.amax(x1) and X[i] > X[preindex]:
+                    preindex = i
+            else:
+                if X[i] == np.amax(x1):
+                    trend = 1
+                    pivots[preindex] = -1
+                    preindex = i
+                if X[i] == np.amin(x1) and X[i] < X[preindex]:
+                    preindex = i
+        # 补充最后一个
+        if trend == 1:
+            pivots[preindex] = 1
+        else:
+            pivots[preindex] = -1
+
+        return pivots
+
+    def pattern_detection2(self):
+        peaks = peak_valley_pivots_np(self.data['high'].values, 5)
+
+        marked_data = self.data.copy()
+        marked_data['qs'] = -1
+
+        marked_data.loc[peaks == 1, 'qs'] = 1
+
+        valleys = peak_valley_pivots_np(self.data['low'].values, 5)
+        marked_data.loc[valleys == -1, 'qs'] = 0
+
+        # 生成high_low_list
+        for i, (idx, row) in enumerate(marked_data.iterrows()):
+            if row['qs'] == 1:
+                # 最高价 索引 1 日期索引
+                self.high_low_list.append([row['high'], i, 1, idx])
+            elif row['qs'] == 0:
+                self.high_low_list.append([row['low'], i, 0, idx])
+            else:
+                pass
+        return marked_data
 
 
     def pattern_detection(self):
@@ -182,9 +250,6 @@ class QsPatterns:
         if not tow_high_list:
             print("没有找到二高点")
             return
-
-        # TODO 分两种情况 1. 一高和试盘之间只有一个高点，这个点是二高，判断二高点价格低于一高价和试盘价，二高前面低点是A点，后面低点是B点，试盘成功
-        # TODO 2. 一高和试盘之间有多个高点，先找到一高和试盘之间最低点，这个点是A点，下一个点是二高，再下个点是B点，试盘成功
 
         if len(tow_high_list) == 1:
             print("使用模型1检测试盘")

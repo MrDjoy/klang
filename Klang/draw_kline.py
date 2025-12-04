@@ -5,7 +5,7 @@
 @Author  : dingyi11@baidu.com
 @File    : draw_kline
 """
-from typing import List, Sequence, Union
+from typing import List, Sequence, Union, Optional
 import pandas as pd
 from pyecharts import options as opts
 from pyecharts.commons.utils import JsCode
@@ -62,6 +62,9 @@ class DrawKline:
                     },
                 ]
             )
+
+        mark_line_data.extend(self.split_resistance_support_data())
+
         return mark_line_data
 
     def split_qushi_data(self) -> Sequence:
@@ -76,6 +79,25 @@ class DrawKline:
             # mark_point_data.append(opts.MarkPointItem(x=p[i][1], y=float(p[i][0]), name="x"))
             mark_point_data.append(opts.MarkPointItem(coord=[p[i][1], float(p[i][0])], name="拐点"))
         return mark_point_data
+
+    def split_resistance_support_data(self) -> Sequence:
+        mark_line_data = []
+        p = self.high_low_list
+        for i in range(len(p)):
+            mark_line_data.append(
+                [
+                    {
+                        "xAxis": p[i][1],
+                        "yAxis": float(p[i][0]),
+                        # "value": vols, # 线上面值？
+                    },
+                    {
+                        "xAxis": p[i][1] + 10,
+                        "yAxis": float(p[i][0]),
+                    },
+                ]
+            )
+        return mark_line_data
 
     def calculate_ma(self, day_count: int):
         result: List[Union[float, str]] = []
@@ -120,7 +142,7 @@ class DrawKline:
                         position="middle", color="blue", font_size=15
                     ),
                     data=self.split_shipan_data(),
-                    symbol="circle",
+                    symbol=["circle", "none"],
                 ),
             )
             .set_series_opts(
