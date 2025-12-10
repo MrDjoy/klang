@@ -248,6 +248,8 @@ class GetData:
         return jsondata
 
     def get_data(self,Kl,code,start,end):
+        self.update_data(Kl,code)
+        save_stockupdate()
         df = self._read_file_data(code)
         if len(df) < 1:
             jsondata = self.down_and_save (Kl,code,start,end)

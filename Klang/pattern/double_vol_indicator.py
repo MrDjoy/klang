@@ -48,7 +48,7 @@ class DoubleVolIndicator:
 
         return df.index[condition]
 
-    def get_double_vol_df(self) -> pd.DataFrame:
+    def get_double_vol_df(self, pd_index: pd.Index) -> pd.DataFrame:
         """
         获取双倍成交量的交易日数据。
 
@@ -56,5 +56,50 @@ class DoubleVolIndicator:
             pd.DataFrame: 交易日数据。
         """
         marked_data = self.data.copy()
-        marked_data['vol2'] = marked_data.index.isin(self.get_double_vol_days()).astype(int)
+        marked_data['vol2'] = marked_data.index.isin(pd_index).astype(int)
+
         return marked_data
+
+    def get_minshipan_by_dvd(self, pd_index: pd.Index, start_date: str, end_date: str) -> pd.DataFrame:
+        """
+        通过双倍成交量索引找到指定日期区间的所有符合条件的最高价，返回相对最低的那一天数据。
+
+        Returns:
+            pd.DataFrame: 最高价相对最低的那一天的完整数据。
+        """
+        if len(pd_index) == 0:
+            return pd.DataFrame()  # 如果没有符合条件的日期，返回空DataFrame
+
+        dvd_data = self.data.loc[pd_index]
+        dvd_data = dvd_data[start_date: end_date]
+
+        if len(dvd_data) == 0:
+            return pd.DataFrame()  # 如果在指定日期范围内没有符合条件的日期，返回空DataFrame
+
+        # 找到最高价最低的那一天
+        return dvd_data[dvd_data['high'] == dvd_data['high'].min()]
+
+    def to_shipan_list(self, shipan_data: pd.DataFrame) -> list:
+        """
+        将试盘数据转换为列表形式，包括：
+        1. 试盘价
+        2. 试盘在整个数据中的位置
+        3. 试盘类型=2
+        4. 试盘日期
+
+        Args:
+            shipan_data (pd.DataFrame): 包含试盘信息的DataFrame。
+
+        Returns:
+            list: 包含试盘信息的列表。
+        """
+        shipan_list = []
+        if len(shipan_data) == 0:
+            return shipan_list
+        for index, row in shipan_data.iterrows():
+            shipan_list.append(row['high'])
+            shipan_list.append(self.data.index.get_loc(index))
+            shipan_list.append(2)
+            shipan_list.append(index)
+            break
+        return shipan_list

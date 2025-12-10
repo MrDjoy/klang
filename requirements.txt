@@ -13,3 +13,10 @@ seaborn
 pyecharts
 plotly
 akshare
+func-timeout
+py-mini-racer
+schedule
+fastapi[all]
+uvicorn[standard]
+sqlalchemy
+asyncpg
