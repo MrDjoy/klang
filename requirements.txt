@@ -20,3 +20,7 @@ fastapi[all]
 uvicorn[standard]
 sqlalchemy
 asyncpg
+pytest
+pytest-asyncio
+httpx
+aiosqlite

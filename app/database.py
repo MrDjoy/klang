@@ -3,6 +3,7 @@
 """
 数据库配置和初始化 - PostgreSQL + SQLAlchemy 2.0
 """
+import asyncio
 import logging
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -40,8 +41,22 @@ AsyncSessionLocal = sessionmaker(
     autoflush=False
 )
 
-@asynccontextmanager
+# @asynccontextmanager
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """获取数据库会话"""
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception as e:
+            await session.rollback()
+            logger.error(f"数据库操作失败: {e}")
+            raise
+        finally:
+            await session.close()
+
+@asynccontextmanager
+async def get_db_async() -> AsyncGenerator[AsyncSession, None]:
     """获取数据库会话"""
     async with AsyncSessionLocal() as session:
         try:

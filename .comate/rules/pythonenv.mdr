@@ -1,0 +1,16 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+在终端运行python代码时，请基于uv环境
+
+安装python包
+uv pip install -r requirements.txt
+
+如运行python脚本
+uv run pytest
+
+如运行python
+uv run --with httpx==0.26.0 python -c "import httpx; print(httpx.__version__)"

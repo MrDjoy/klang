@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
 
 from app.database import get_db
-from app.models.data_models import EmailConfigCreate, EmailConfigUpdate, ResponseModel
+from app.models.views import EmailConfigCreate, EmailConfigUpdate, ResponseModel
 from app.models.models import EmailConfig
 
 router = APIRouter()

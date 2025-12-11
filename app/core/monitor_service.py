@@ -11,7 +11,7 @@ import logging
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.database import get_db_async
 from app.models.models import MonitorTask, TradingPlan, ExecutionLog, EmailConfig
 from data.monitor import StockMonitor
 
@@ -35,7 +35,7 @@ class MonitorService:
         logger.info("启动监控服务")
 
         # 加载所有运行中的任务
-        async with get_db() as session:
+        async with get_db_async() as session:
             stmt = select(MonitorTask).where(MonitorTask.status == "running")
             result = await session.execute(stmt)
             tasks = result.scalars().all()
@@ -77,7 +77,7 @@ class MonitorService:
 
     async def _execute_monitor_task(self, task: MonitorTask):
         """执行监控任务"""
-        async with get_db() as session:
+        async with get_db_async() as session:
             # 获取任务最新数据
             stmt = select(MonitorTask).where(MonitorTask.id == task.id)
             result = await session.execute(stmt)
@@ -143,7 +143,7 @@ class MonitorService:
         if not self._running:
             return
 
-        async with get_db() as session:
+        async with get_db_async() as session:
             stmt = select(MonitorTask).where(MonitorTask.id == task_id)
             result = await session.execute(stmt)
             task = result.scalar_one()

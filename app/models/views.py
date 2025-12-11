@@ -5,7 +5,7 @@
 """
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class TradingPlanBase(BaseModel):
@@ -21,6 +21,13 @@ class TradingPlanBase(BaseModel):
     date_down_rate: float = 0.04
     total_down_rate: float = 0.04
     status: str = "enable"
+
+    @field_validator('threshold', 'date_up_rate', 'date_down_rate', 'total_down_rate', mode='before')
+    def round_to_two_decimals(cls, v):
+        """将浮点数保留2位小数"""
+        if isinstance(v, float):
+            return round(v, 2)
+        return v
 
 
 class TradingPlanCreate(TradingPlanBase):

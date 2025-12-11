@@ -10,7 +10,7 @@ from app.core.monitor_service import MonitorService
 from sqlalchemy import select, delete
 
 from app.database import get_db
-from app.models.data_models import (
+from app.models.views import (
     MonitorTaskCreate, MonitorTaskResponse, ResponseModel
 )
 from app.models.models import (

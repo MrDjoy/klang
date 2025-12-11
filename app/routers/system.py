@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy import select, func
 
 from app.database import get_db
-from app.models.data_models import ResponseModel
+from app.models.views import ResponseModel
 from app.models.models import TradingPlan, MonitorTask
 
 router = APIRouter()
