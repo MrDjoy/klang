@@ -4,23 +4,24 @@
 邮件配置管理API路由
 """
 from datetime import datetime
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.database import get_db
-from app.models.views import EmailConfigCreate, EmailConfigUpdate, ResponseModel
+from app.models.views import EmailConfigCreate, EmailConfigUpdate, ResponseModel, EmailConfigResponse
 from app.models.models import EmailConfig
 
 router = APIRouter()
 
 
 @router.get("/email-config", response_model=ResponseModel)
-async def get_email_config():
+async def get_email_config(db: AsyncSession = Depends(get_db)):
     """获取邮件配置"""
     try:
-        async with get_db() as session:
+        async with db.begin():
             stmt = select(EmailConfig).order_by(EmailConfig.id.desc()).limit(1)
-            result = await session.execute(stmt)
+            result = await db.execute(stmt)
             config = result.scalar_one_or_none()
 
         if not config:
@@ -31,14 +32,12 @@ async def get_email_config():
             )
 
         # 隐藏敏感信息
-        config_dict = config.__dict__
-        if 'sender_password' in config_dict:
-            config_dict['sender_password'] = '***'  # 密码字段隐藏
+        email_response = EmailConfigResponse.model_validate(config)
 
         return ResponseModel(
             code=200,
             message="success",
-            data=config_dict
+            data=email_response.model_dump()
         )
 
     except Exception as e:
@@ -48,13 +47,13 @@ async def get_email_config():
 
 
 @router.put("/email-config", response_model=ResponseModel)
-async def update_email_config(config: EmailConfigUpdate):
+async def update_email_config(config: EmailConfigUpdate, db: AsyncSession = Depends(get_db)):
     """更新邮件配置"""
     try:
-        async with get_db() as session:
+        async with db.begin():
             # 检查是否存在配置
             stmt = select(EmailConfig).order_by(EmailConfig.id.desc()).limit(1)
-            result = await session.execute(stmt)
+            result = await db.execute(stmt)
             existing = result.scalar_one_or_none()
 
             if existing:
@@ -78,20 +77,18 @@ async def update_email_config(config: EmailConfigUpdate):
                     sender_name=config.sender_name,
                     receiver_name=config.receiver_name
                 )
-                session.add(existing)
+            db.add(existing)
 
-            await session.commit()
-            await session.refresh(existing)
+            await db.commit()
+            await db.refresh(existing)
 
             # 隐藏敏感信息
-            config_dict = existing.__dict__
-            if 'sender_password' in config_dict:
-                config_dict['sender_password'] = '***'
+            email_response = EmailConfigResponse.model_validate(existing)
 
         return ResponseModel(
             code=200,
             message="邮件配置更新成功",
-            data=config_dict
+            data=email_response.model_dump()
         )
 
     except Exception as e:
@@ -101,13 +98,13 @@ async def update_email_config(config: EmailConfigUpdate):
 
 
 @router.post("/email-config/test", response_model=ResponseModel)
-async def test_email_config():
+async def test_email_config(db: AsyncSession = Depends(get_db)):
     """测试邮件配置"""
     try:
-        async with get_db() as session:
+        async with db.begin():
             # 获取邮件配置
             stmt = select(EmailConfig).order_by(EmailConfig.id.desc()).limit(1)
-            result = await session.execute(stmt)
+            result = await db.execute(stmt)
             config = result.scalar_one_or_none()
 
             if not config:

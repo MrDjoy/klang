@@ -3,9 +3,9 @@
 """
 盯盘机器人Web应用 - 数据模型定义
 """
-from datetime import datetime
+from datetime import datetime, time
 from typing import Optional, List
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, SecretStr
 
 
 class TradingPlanBase(BaseModel):
@@ -55,6 +55,8 @@ class MonitorTaskBase(BaseModel):
     trading_plan_id: int
     interval_minutes: int = 15
     status: str = "stopped"
+    start_time: time = time(9, 30)  # 默认9:30开盘时间
+    end_time: time = time(15, 0)    # 默认15:00收盘时间
 
 
 class MonitorTaskCreate(MonitorTaskBase):
@@ -66,16 +68,15 @@ class MonitorTaskUpdate(MonitorTaskBase):
     """更新盯盘任务模型"""
     pass
 
-
 class MonitorTaskResponse(MonitorTaskBase):
     """盯盘任务响应模型"""
     id: int
-    stock_code: str
-    stock_name: str
     last_run_time: Optional[datetime] = None
     next_run_time: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+    stock_code: str  # 从关联模型获取
+    stock_name: str  # 从关联模型获取
 
     class Config:
         from_attributes = True
@@ -86,7 +87,7 @@ class EmailConfigBase(BaseModel):
     smtp_server: str
     smtp_port: int
     sender_email: str
-    sender_password: str
+    sender_password: SecretStr
     receiver_email: str
     sender_name: str = "盯盘机器人"
     receiver_name: str = "投资者"
@@ -110,6 +111,9 @@ class EmailConfigResponse(EmailConfigBase):
 
     class Config:
         from_attributes = True
+        json_encoders = {
+            SecretStr: lambda v: "***" if v else None
+        }
 
 
 class ExecutionLogResponse(BaseModel):

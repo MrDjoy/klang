@@ -7,7 +7,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select, func
 
-from app.database import get_db
+from app.database import get_db_async
 from app.models.views import ResponseModel
 from app.models.models import TradingPlan, MonitorTask
 
@@ -19,7 +19,7 @@ async def health_check():
     """健康检查接口"""
     try:
         # 检查数据库连接
-        async with get_db() as session:
+        async with get_db_async() as session:
             await session.execute(select(1))
 
         return ResponseModel(
@@ -39,7 +39,7 @@ async def health_check():
 async def get_system_status():
     """获取系统状态"""
     try:
-        async with get_db() as session:
+        async with get_db_async() as session:
             # 获取统计数据
             total_plans = (await session.execute(select(TradingPlan))).scalars().count()
             active_tasks = (await session.execute(

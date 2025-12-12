@@ -225,6 +225,7 @@ class StockMonitor:
         最低: {low_price}
         当日涨跌幅: {up_down_rate}%
         止损价格: {stop_loss_price}
+        买入价: {buy_price}
         购买股数: {plan['quantity']}股
         浮动盈亏: {rate*100:.2f}% {plan['quantity'] * (latest_price - buy_price):.2f}
         时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
@@ -279,6 +280,7 @@ class StockMonitor:
         最低: {low_price}
         当日涨跌幅: {up_down_rate}%
         止盈价格: {take_profit_price}
+        买入价: {buy_price}
         购买股数: {plan['quantity']}股
         浮动盈亏: {rate*100:.2f}% {plan['quantity'] * (latest_price - buy_price):.2f}
         时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}

@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from typing import Dict
 import logging
 
+from pytz import utc, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,12 +19,13 @@ from data.monitor import StockMonitor
 logger = logging.getLogger(__name__)
 
 
-class MonitorService:
+class MonitorService(object):
     """盯盘任务监控服务"""
 
     def __init__(self):
         self._running = False
         self._tasks: Dict[int, asyncio.Task] = {}
+        self.shanghai_tz = timezone('Asia/Shanghai')
 
     async def start(self):
         """启动监控服务"""
@@ -41,7 +43,7 @@ class MonitorService:
             tasks = result.scalars().all()
 
             for task in tasks:
-                self._schedule_task(task)
+                await self._schedule_task(task)
 
     async def _schedule_task(self, task: MonitorTask):
         """安排定时任务"""
@@ -77,6 +79,13 @@ class MonitorService:
 
     async def _execute_monitor_task(self, task: MonitorTask):
         """执行监控任务"""
+        current_time = datetime.now().time()
+
+        if not (task.start_time <= current_time <= task.end_time):
+            shanghai_now = datetime.now(self.shanghai_tz)
+            logger.info(f"当前时间{shanghai_now}不在执行时间段内")
+            return
+
         async with get_db_async() as session:
             # 获取任务最新数据
             stmt = select(MonitorTask).where(MonitorTask.id == task.id)
@@ -112,7 +121,7 @@ class MonitorService:
             )
 
             # 执行监控
-            logger.info(f"开始执行任务 {task.id} - {plan.stock_code}")
+            logger.info(f"开始执行任务 {task.id} - {plan.stock_code} - {plan.stock_name}")
             await asyncio.to_thread(monitor.monitor_stocks)
 
             # 更新任务最后执行时间
@@ -149,7 +158,7 @@ class MonitorService:
             task = result.scalar_one()
 
             if task.status == "running":
-                self._schedule_task(task)
+                await self._schedule_task(task)
 
     async def remove_task(self, task_id: int):
         """移除任务"""

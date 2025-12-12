@@ -20,7 +20,10 @@ fastapi[all]
 uvicorn[standard]
 sqlalchemy
 asyncpg
+psycopg2
 pytest
 pytest-asyncio
 httpx
 aiosqlite
+dependency-injector
+alembic

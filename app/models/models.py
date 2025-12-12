@@ -3,11 +3,11 @@
 """
 SQLAlchemy 2.0 ORM模型定义
 """
-from datetime import datetime
+from datetime import datetime, time
 from typing import Optional
 from sqlalchemy import (
     Column, Integer, String, Float, Boolean,
-    DateTime, ForeignKey, BigInteger
+    DateTime, ForeignKey, BigInteger, Time
 )
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -43,6 +43,8 @@ class MonitorTask(Base):
     last_run_time = Column(DateTime)
     next_run_time = Column(DateTime)
     status = Column(String(10), default="stopped")
+    start_time = Column(Time, default=time(9, 30))  # 默认9:30开盘时间
+    end_time = Column(Time, default=time(15, 0))    # 默认15:00收盘时间
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
